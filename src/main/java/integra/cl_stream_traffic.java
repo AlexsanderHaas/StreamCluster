@@ -30,7 +30,7 @@ import org.apache.spark.streaming.kafka010.LocationStrategies;
 
 public class cl_stream_traffic {
 	
-	final static String gc_table = "JSON9";
+	final static String gc_table = "JSON00";
 	final static String gc_zkurl = "namenode.ambari.hadoop:2181:/hbase-unsecure";
 	final static String gc_boots = "namenode.ambari.hadoop:6667";	
 	
@@ -50,7 +50,7 @@ public class cl_stream_traffic {
 
 	}
 	
-public void m_start() throws InterruptedException {
+	public void m_start() throws InterruptedException {
 		
 		Map<String, Object> lv_kafkaParams = new HashMap<String, Object>();
 		
@@ -85,12 +85,12 @@ public void m_start() throws InterruptedException {
 	
 	public static void m_consome_kafka(Map<String, Object> lv_kafka) throws InterruptedException {
 
-		SparkConf lv_conf = new SparkConf().setMaster("local[2]").setAppName("BroLogConn");
+		//SparkConf lv_conf = new SparkConf().setMaster("local[2]").setAppName("BroLogConn");
 
-		// SparkConf conf = new SparkConf().setAppName("BroLogConn");//se for executar no submit
+		SparkConf lv_conf = new SparkConf().setAppName("BroLog");//se for executar no submit
 
 		// Read messages in batch of 30 seconds
-		JavaStreamingContext lv_jssc = new JavaStreamingContext(lv_conf, Durations.seconds(3));// Durations.milliseconds(10));
+		JavaStreamingContext lv_jssc = new JavaStreamingContext(lv_conf, Durations.seconds(10));// Durations.milliseconds(10));
 																				
 		// Disable INFO messages-> 
 		Logger.getRootLogger().setLevel(Level.ERROR);
@@ -106,7 +106,7 @@ public void m_start() throws InterruptedException {
 				return lv_kafkaRecord.value();
 			}
 		});
-
+		
 		lv_lines.foreachRDD((rdd, time) -> {
 			
 			Date lv_time = new Date();
@@ -124,9 +124,9 @@ public void m_start() throws InterruptedException {
 			
 			m_save_log(lv_data, gc_conn, lv_stamp);
 			
-			//m_save_log(lv_data, gc_dns, lv_stamp);
+			m_save_log(lv_data, gc_dns, lv_stamp);
 			
-			//m_save_log(lv_data, gc_http, lv_stamp);
+			m_save_log(lv_data, gc_http, lv_stamp);
 			
 			//lv_data.printSchema();
 			
@@ -137,7 +137,6 @@ public void m_start() throws InterruptedException {
 		//lv_lines.print();
 		lv_jssc.start();
 		lv_jssc.awaitTermination();
-		
 		
 	}
 	
@@ -164,24 +163,27 @@ public void m_start() throws InterruptedException {
 					.withColumnRenamed("id.resp_h", "id_resp_h")
 					.withColumnRenamed("id.resp_p", "id_resp_p")
 					.withColumn("tipo", functions.lit(lv_log))
-					.withColumn("ts_code", functions.lit(lv_stamp));
-			
-			//lv_json.printSchema();
-			
-			long lv_num = lv_json.count();			
-
-			lv_json.write()
-					.format("org.apache.phoenix.spark")
-					.mode("overwrite")
-					//.option("timeZone", "GMT-2")
-					.option("table", gc_table)
-					.option("zkUrl", gc_zkurl)
-					.save();
-			
-			System.out.println("LOG: "+ lv_tipo +" = "+ lv_num);
+					.withColumn("ts_code", functions.lit(lv_stamp))
+					 .withColumn("rowid", functions.monotonically_increasing_id());
 			
 			//lv_json.printSchema();
 			//lv_json.show();
+			
+			long lv_num = lv_json.count();			
+			
+			if(lv_num > 0) {
+			
+				lv_json.write()
+					.format("org.apache.phoenix.spark")
+					.mode("overwrite")
+					.option("table", gc_table)
+					.option("zkUrl", gc_zkurl)
+					.option("autocommit", "true")
+					.save();
+			}
+			
+			System.out.println("LOG: "+ lv_tipo +" = "+ lv_num);
+						
 
 		} catch (Exception e) {
 			//System.out.println(e);
