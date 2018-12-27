@@ -164,7 +164,7 @@ public class cl_stream_traffic {
 					.withColumnRenamed("id.resp_p", "id_resp_p")
 					.withColumn("tipo", functions.lit(lv_log))
 					.withColumn("ts_code", functions.lit(lv_stamp))
-					 .withColumn("rowid", functions.monotonically_increasing_id());
+					.withColumn("rowid", functions.monotonically_increasing_id());
 			
 			//lv_json.printSchema();
 			//lv_json.show();
