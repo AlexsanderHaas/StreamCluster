@@ -32,9 +32,9 @@ public class cl_stream_traffic {
 	
 	private static int gv_submit = 1; //1=Cluster 
 	
-	final static String gv_table = "LOG";
+	final static String gv_table = "LOG_UFSM";
 	
-	final static String gv_devices = "BRO_DEVICES";
+	final static String gv_devices = "BRO_DEVICES_UFSM";
 	
 	final static String gv_zkurl = "namenode.ambari.hadoop:2181:/hbase-unsecure";
 	final static String gc_boots = "namenode.ambari.hadoop:6667";
@@ -103,7 +103,7 @@ public class cl_stream_traffic {
 		}
 		
 		// Read messages in batch of 30 seconds
-		JavaStreamingContext lv_jssc = new JavaStreamingContext(lv_conf, Durations.seconds(3));// Durations.milliseconds(10));
+		JavaStreamingContext lv_jssc = new JavaStreamingContext(lv_conf, Durations.seconds(30));// Durations.milliseconds(10));
 																				
 		// Disable INFO messages-> 
 		Logger.getRootLogger().setLevel(Level.ERROR);
